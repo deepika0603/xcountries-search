@@ -1,35 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [countries, setCountries] = useState([]);
+  const [search, setSearch] = useState("");
+  const [filteredData, updateFilteredData] = useState([]);
+
+  const handleChange = (e) => {
+    setSearch(e.target.value);
+  };
+
+  const toCamelCase = (str) => {
+    return str.toLowerCase().replace(/(?:(^.)|(\s+.))/g, function (match) {
+      return match.charAt(match.length - 1).toUpperCase();
+    });
+  };
+
+  const filterCountries = (countries, search) => {
+    let filteredCountries = countries.filter((country) =>
+      country.common.includes(search)
+    );
+    // console.log(filteredCountries);
+    if (filteredCountries.length) {
+      updateFilteredData(filteredCountries);
+    } else {
+      updateFilteredData([]);
+    }
+  };
+
+  useEffect(() => {
+    if (search.length) {
+      let camcelCaseSearch = toCamelCase(search);
+      // console.log(camcelCaseSearch);
+      filterCountries(countries, camcelCaseSearch);
+    }
+  }, [search]);
+
+  useEffect(() => {
+    fetch(
+      "https://countries-search-data-prod-812920491762.asia-south1.run.app/countries"
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error();
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // console.log(data);
+        setCountries(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div>
+      <div className="input_wrapper">
+        <input
+          type="text"
+          value={search}
+          placeholder="Search for countries..."
+          onChange={handleChange}
+        />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+
+      <div className="country_box">
+        {search.length
+          ? filteredData.map((country, index) => {
+              return (
+                <div className="countryCard" key={`${country.common}_${index}`}>
+                  <img
+                    src={country.png}
+                    alt={country.common}
+                    width="100px"
+                    height="100px"
+                  />
+                  <p>{country.common}</p>
+                </div>
+              );
+            })
+          : countries.map((country, index) => {
+              return (
+                <div className="countryCard" key={`${country.common}_${index}`}>
+                  <img
+                    src={country.png}
+                    alt={country.common}
+                    width="100px"
+                    height="100px"
+                  />
+                  <p>{country.common}</p>
+                </div>
+              );
+            })}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
